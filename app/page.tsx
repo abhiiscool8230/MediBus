@@ -9,6 +9,7 @@ interface Store {
   name: string;
   type: "Hospital" | "Clinic" | "Homeopathy";
   location: string;
+  phone: string;
   mapQuery: string;
   lat: number;
   lon: number;
@@ -32,17 +33,14 @@ export default function Dashboard() {
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   
-  // User Address & Coordinates state
   const [userAddress, setUserAddress] = useState("Bhubaneswar, Odisha");
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [estimatedTimes, setEstimatedTimes] = useState<{ [key: string]: number }>({});
   const [hasCalculated, setHasCalculated] = useState(false);
 
-  // Appointment form state
-  const [appointment, setAppointment] = useState({ patientName: "", date: "", time: "", notes: "" });
+  const [appointment, setAppointment] = useState({ patientName: "", phoneNo: "", gmail: "", date: "", time: "", notes: "" });
   const [appointmentBooked, setAppointmentBooked] = useState(false);
 
-  // Generate a list of the next 7 available dates formatted as DD-MM-YYYY for the dropdown
   const availableDates = Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() + i);
@@ -52,41 +50,37 @@ export default function Dashboard() {
     return `${day}-${month}-${year}`;
   });
 
-  // Available consultation time slots
   const availableTimes = [
-    "09:00 AM - 09:30 AM",
-    "09:30 AM - 10:00 AM",
-    "10:00 AM - 10:30 AM",
-    "10:30 AM - 11:00 AM",
-    "11:00 AM - 11:30 AM",
-    "11:30 AM - 12:00 PM",
-    "02:00 PM - 02:30 PM",
-    "02:30 PM - 03:00 PM",
-    "03:00 PM - 03:30 PM",
-    "03:30 PM - 04:00 PM",
-    "05:00 PM - 05:30 PM",
-    "05:30 PM - 06:00 PM"
+    "10:00 AM - 11:00 AM",
+    "11:00 AM - 12:00 PM",
+    "02:00 PM - 03:00 PM",
+    "04:30 PM - 05:30 PM"
   ];
 
-  // AI Assistant state
+  interface AiResultType {
+    advice: string;
+    medicines: string[];
+    availableStore: string;
+    specialist: string;
+  }
+
   const [symptomsInput, setSymptomsInput] = useState("");
-  const [aiResult, setAiResult] = useState<{ specialist: string; advice: string; medicines: string[]; availableStore: string } | null>(null);
+  const [aiResult, setAiResult] = useState<AiResultType | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  // FIFO Teleconsultation Queue state
   const [queueStatus, setQueueStatus] = useState<"idle" | "checking" | "in-queue" | "connected">("idle");
   const [ticketNumber, setTicketNumber] = useState<number>(0);
   const [currentServing, setCurrentServing] = useState<number>(1);
   const [queueLength, setQueueLength] = useState<number>(0);
 
-  // Load major hospitals, minor clinics, and homeopathy drugstores in Bhubaneswar
   useEffect(() => {
     setStores([
       { 
         id: "aiims-bhubaneswar", 
         name: "AIIMS Bhubaneswar", 
         type: "Hospital",
-        location: "Sijua, Patrapada, Bhubaneswar", 
+        location: "Sijua, Patrapada, Bhubaneswar",
+        phone: "+91 674 247 3999",
         mapQuery: "https://www.google.com/maps/search/?api=1&query=AIIMS+Bhubaneswar+Odisha",
         lat: 20.2226, lon: 85.7663
       },
@@ -94,7 +88,8 @@ export default function Dashboard() {
         id: "sum-hospital", 
         name: "IMS and SUM Hospital", 
         type: "Hospital",
-        location: "K8, Kalinga Nagar, Ghatikia, Bhubaneswar", 
+        location: "K8, Kalinga Nagar, Ghatikia, Bhubaneswar",
+        phone: "+91 674 238 6100",
         mapQuery: "https://www.google.com/maps/search/?api=1&query=IMS+and+SUM+Hospital+Bhubaneswar",
         lat: 20.2731, lon: 85.7533
       },
@@ -102,7 +97,8 @@ export default function Dashboard() {
         id: "apollo-hospitals", 
         name: "Apollo Hospitals", 
         type: "Hospital",
-        location: "15, Acharya Vihar, Unit 15, Bhubaneswar", 
+        location: "15, Acharya Vihar, Unit 15, Bhubaneswar",
+        phone: "+91 674 666 1010",
         mapQuery: "https://www.google.com/maps/search/?api=1&query=Apollo+Hospitals+Bhubaneswar",
         lat: 20.3013, lon: 85.8336
       },
@@ -110,7 +106,8 @@ export default function Dashboard() {
         id: "kims-hospital", 
         name: "Kalinga Institute of Medical Sciences (KIMS)", 
         type: "Hospital",
-        location: "Patia, Bhubaneswar", 
+        location: "Patia, Bhubaneswar",
+        phone: "+91 674 230 4800",
         mapQuery: "https://www.google.com/maps/search/?api=1&query=KIMS+Hospital+Bhubaneswar",
         lat: 20.3541, lon: 85.8166
       },
@@ -118,7 +115,8 @@ export default function Dashboard() {
         id: "saheed-nagar-clinic", 
         name: "Saheed Nagar Community Clinic", 
         type: "Clinic",
-        location: "Plot 42, Saheed Nagar, Bhubaneswar", 
+        location: "Plot 42, Saheed Nagar, Bhubaneswar",
+        phone: "+91 674 254 1122",
         mapQuery: "https://www.google.com/maps/search/?api=1&query=Saheed+Nagar+Clinic+Bhubaneswar",
         lat: 20.2858, lon: 85.8456
       },
@@ -126,7 +124,8 @@ export default function Dashboard() {
         id: "nayapalli-health-centre", 
         name: "Nayapalli Primary Health Centre", 
         type: "Clinic",
-        location: "IRC Village, Nayapalli, Bhubaneswar", 
+        location: "IRC Village, Nayapalli, Bhubaneswar",
+        phone: "+91 674 255 3344",
         mapQuery: "https://www.google.com/maps/search/?api=1&query=Nayapalli+Primary+Health+Centre+Bhubaneswar",
         lat: 20.2941, lon: 85.8145
       },
@@ -134,7 +133,8 @@ export default function Dashboard() {
         id: "rajdhani-homeo", 
         name: "Rajdhani Homeo Hall", 
         type: "Homeopathy",
-        location: "Bapuji Nagar, Bhubaneswar", 
+        location: "Bapuji Nagar, Bhubaneswar",
+        phone: "+91 674 253 1255",
         mapQuery: "https://www.google.com/maps/search/?api=1&query=Rajdhani+Homeo+Hall+Bhubaneswar",
         lat: 20.2678, lon: 85.8392
       },
@@ -142,14 +142,14 @@ export default function Dashboard() {
         id: "dr-batras-homeopathy", 
         name: "Dr. Batra's Homeopathy Clinic", 
         type: "Homeopathy",
-        location: "Janpath, Kharvel Nagar, Bhubaneswar", 
+        location: "Janpath, Kharvel Nagar, Bhubaneswar",
+        phone: "+91 924 334 7288",
         mapQuery: "https://www.google.com/maps/search/?api=1&query=Dr+Batras+Homeopathy+Bhubaneswar",
         lat: 20.2783, lon: 85.8431
       }
     ]);
   }, []);
 
-  // Haversine distance formula
   const calculateDistanceKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
     const R = 6371;
     const dLat = (lat2 - lat1) * (Math.PI / 180);
@@ -173,7 +173,6 @@ export default function Dashboard() {
     setHasCalculated(true);
   };
 
-  // Auto-detect location function ("Detect Me")
   const handleAutoDetectLocation = () => {
     setUserAddress("Detecting your location...");
     if (navigator.geolocation) {
@@ -208,7 +207,6 @@ export default function Dashboard() {
     }
   };
 
-  // Auto-detect location on initial mount
   useEffect(() => {
     handleAutoDetectLocation();
   }, [stores]);
@@ -226,7 +224,6 @@ export default function Dashboard() {
     return timeA - timeB;
   });
 
-  // Load tailored inventory with tablet/unit pack sizes based on facility type
   useEffect(() => {
     if (selectedStore && activeView === "inventory") {
       let sampleMeds: Medicine[] = [];
@@ -235,33 +232,16 @@ export default function Dashboard() {
         sampleMeds = [
           { id: "h1", name: "Arsenicum Album 30C", category: "Homeopathic Remedy", packSize: "30ml Liquid Dilution", stock: 150, price: 120.00, expiryDate: "2029-12-31" },
           { id: "h2", name: "Arnica Montana 200CH", category: "Homeopathic Remedy", packSize: "100 Pills Bottle", stock: 200, price: 145.00, expiryDate: "2029-10-15" },
-          { id: "h3", name: "Nux Vomica 30C", category: "Digestive Care", packSize: "100 Pills Bottle", stock: 110, price: 135.00, expiryDate: "2028-08-20" },
-          { id: "h4", name: "Rhus Toxicodendron 30C", category: "Joint & Muscle", packSize: "30ml Liquid Dilution", stock: 85, price: 125.00, expiryDate: "2029-05-10" },
-          { id: "h5", name: "Belladonna 30C", category: "Fever & Inflammation", packSize: "100 Pills Bottle", stock: 95, price: 140.00, expiryDate: "2028-11-30" },
-          { id: "h6", name: "Bryonia Alba 30C", category: "Respiratory Care", packSize: "30ml Liquid Dilution", stock: 60, price: 130.00, expiryDate: "2029-02-18" },
-          { id: "h7", name: "Pulsatilla 30C", category: "Cold & Cough", packSize: "100 Pills Bottle", stock: 130, price: 125.00, expiryDate: "2028-09-12" }
         ];
       } else if (selectedStore.type === "Clinic") {
         sampleMeds = [
           { id: "c1", name: "Paracetamol 500mg", category: "Analgesic", packSize: "10 Tablets (Strip)", stock: 250, price: 18.00, expiryDate: "2028-12-31" },
           { id: "c2", name: "Cetirizine 10mg", category: "Antihistamine", packSize: "10 Tablets (Strip)", stock: 180, price: 12.00, expiryDate: "2028-09-30" },
-          { id: "c3", name: "ORS Electrolyte Packets", category: "Hydration", packSize: "1 Sachet (21.8g)", stock: 300, price: 22.00, expiryDate: "2029-06-30" },
-          { id: "c4", name: "Pantoprazole 40mg", category: "Gastrointestinal", packSize: "15 Tablets (Strip)", stock: 90, price: 45.00, expiryDate: "2028-05-12" },
-          { id: "c5", name: "Ibuprofen 400mg", category: "Anti-inflammatory", packSize: "10 Tablets (Strip)", stock: 120, price: 25.00, expiryDate: "2029-01-10" },
-          { id: "c6", name: "Azithromycin 250mg", category: "Antibiotic", packSize: "6 Tablets (Strip)", stock: 35, price: 75.00, expiryDate: "2027-08-19" }
         ];
       } else {
         sampleMeds = [
           { id: "m1", name: "Paracetamol 650mg", category: "Analgesic", packSize: "15 Tablets (Strip)", stock: 850, price: 22.50, expiryDate: "2028-12-31" },
           { id: "m2", name: "Amoxicillin 500mg", category: "Antibiotic", packSize: "10 Capsules (Strip)", stock: 45, price: 95.00, expiryDate: "2027-06-15" },
-          { id: "m3", name: "Cetirizine 10mg", category: "Antihistamine", packSize: "10 Tablets (Strip)", stock: 620, price: 15.00, expiryDate: "2028-09-30" },
-          { id: "m4", name: "Omeprazole 20mg", category: "Gastrointestinal", packSize: "14 Capsules (Strip)", stock: 210, price: 45.00, expiryDate: "2027-03-20" },
-          { id: "m5", name: "Ibuprofen 400mg", category: "Anti-inflammatory", packSize: "10 Tablets (Strip)", stock: 380, price: 28.00, expiryDate: "2029-01-10" },
-          { id: "m6", name: "Metformin 500mg", category: "Antidiabetic", packSize: "20 Tablets (Strip)", stock: 510, price: 34.50, expiryDate: "2028-11-05" },
-          { id: "m7", name: "Azithromycin 500mg", category: "Antibiotic", packSize: "5 Tablets (Strip)", stock: 145, price: 110.00, expiryDate: "2027-08-19" },
-          { id: "m8", name: "Pantoprazole 40mg", category: "Gastrointestinal", packSize: "15 Tablets (Strip)", stock: 115, price: 55.00, expiryDate: "2028-05-12" },
-          { id: "m9", name: "Montelukast 10mg", category: "Respiratory", packSize: "10 Tablets (Strip)", stock: 190, price: 130.00, expiryDate: "2028-10-14" },
-          { id: "m10", name: "Amlodipine 5mg", category: "Cardiovascular", packSize: "15 Tablets (Strip)", stock: 400, price: 18.00, expiryDate: "2029-04-25" }
         ];
       }
 
@@ -276,51 +256,44 @@ export default function Dashboard() {
 
     setTimeout(() => {
       const text = symptomsInput.toLowerCase();
-      let result = {
-        specialist: "General Practitioner (GP)",
+      let analysisResult: AiResultType = {
         advice: "Ensure proper hydration, get adequate rest, and monitor your temperature regularly.",
         medicines: ["Paracetamol 650mg", "Cetirizine 10mg"],
         availableStore: "Saheed Nagar Community Clinic & AIIMS Bhubaneswar",
+        specialist: "General Practitioner (GP)",
       };
 
       if (text.includes("chest") || text.includes("heart") || text.includes("breath")) {
-        result = {
-          specialist: "Cardiologist / Emergency Medicine",
+        analysisResult = {
           advice: "Seek immediate medical attention if shortness of breath or sharp chest pains persist.",
           medicines: ["Aspirin", "Prescription Nitrates"],
           availableStore: "Apollo Hospitals & IMS and SUM Hospital",
+          specialist: "Cardiologist / Emergency Medicine",
         };
       } else if (text.includes("skin") || text.includes("rash") || text.includes("itch")) {
-        result = {
-          specialist: "Dermatologist",
+        analysisResult = {
           advice: "Keep the affected area clean and dry. Avoid scratching or applying harsh chemical soaps.",
           medicines: ["Antihistamine Cream", "Cetirizine 10mg"],
           availableStore: "Saheed Nagar Community Clinic & KIMS",
-        };
-      } else if (text.includes("headache") || text.includes("migraine") || text.includes("dizzy")) {
-        result = {
-          specialist: "Neurologist / General Practitioner",
-          advice: "Rest in a quiet, dark room and avoid screen time until symptoms subside.",
-          medicines: ["Ibuprofen 400mg", "Paracetamol 650mg"],
-          availableStore: "IMS and SUM Hospital & Nayapalli Primary Health Centre",
+          specialist: "Dermatologist",
         };
       } else if (text.includes("stomach") || text.includes("nausea") || text.includes("digestion") || text.includes("pain")) {
-        result = {
-          specialist: "Gastroenterologist",
+        analysisResult = {
           advice: "Stick to a bland diet and consume electrolytes to stay hydrated.",
           medicines: ["Omeprazole 20mg", "ORS Electrolyte Packets"],
           availableStore: "AIIMS Bhubaneswar & Rajdhani Homeo Hall",
+          specialist: "Gastroenterologist",
         };
-      } else if (text.includes("cold") || text.includes("cough") || text.includes("fever")) {
-        result = {
-          specialist: "General Practitioner / ENT Specialist",
-          advice: "Drink warm fluids, gargle with warm salt water, and take plenty of rest.",
-          medicines: ["Paracetamol 650mg", "Azithromycin 500mg"],
-          availableStore: "Apollo Hospitals & Saheed Nagar Community Clinic",
+      } else if (text.includes("head") || text.includes("migraine") || text.includes("dizzy")) {
+        analysisResult = {
+          advice: "Rest in a quiet, dark room and avoid screen time until symptoms subside.",
+          medicines: ["Ibuprofen 400mg", "Paracetamol 650mg"],
+          availableStore: "IMS and SUM Hospital & Nayapalli Primary Health Centre",
+          specialist: "Neurologist / General Practitioner",
         };
       }
 
-      setAiResult(result);
+      setAiResult(analysisResult);
       setIsAnalyzing(false);
     }, 1000);
   };
@@ -330,7 +303,6 @@ export default function Dashboard() {
     setAppointmentBooked(true);
   };
 
-  // FIFO Queue simulation
   const handleJoinConsultation = () => {
     setQueueStatus("checking");
     setTimeout(() => {
@@ -376,20 +348,17 @@ export default function Dashboard() {
   const totalStockCount = medicines.reduce((acc: number, item: Medicine) => acc + item.stock, 0);
   const lowStockCount = medicines.filter((item: Medicine) => item.stock < 10).length;
 
-  // STEP 1: First Interface
   if (!selectedStore) {
     return (
       <main className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-6">
         <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-6">
-          
-          {/* Left Column: AI Symptom Checker */}
           <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl flex flex-col justify-between space-y-4">
             <div className="space-y-2">
               <div className="inline-flex p-2.5 bg-teal-950 text-teal-400 rounded-xl mb-1">
                 <Bot className="w-6 h-6" />
               </div>
               <h2 className="text-xl font-bold text-teal-400">AI Symptom Assistant</h2>
-              <p className="text-xs text-slate-400">Describe your symptoms below to get specialist recommendations, general health advice, and stock locations.</p>
+              <p className="text-xs text-slate-400">Describe your symptoms below to get general advice, stock locations, and specialist recommendations.</p>
             </div>
 
             <form onSubmit={handleAiAnalysis} className="space-y-3 flex-1 flex flex-col justify-between">
@@ -416,10 +385,6 @@ export default function Dashboard() {
             {aiResult && (
               <div className="bg-slate-950 border border-teal-800/60 p-4 rounded-xl space-y-2.5 text-xs animate-fadeIn">
                 <div>
-                  <span className="text-teal-400 font-semibold uppercase tracking-wider text-[10px]">Recommended Specialist:</span>
-                  <div className="font-bold text-slate-100">{aiResult.specialist}</div>
-                </div>
-                <div>
                   <span className="text-amber-400 font-semibold uppercase tracking-wider text-[10px]">General Advice Line:</span>
                   <div className="text-slate-300 font-medium italic">"{aiResult.advice}"</div>
                 </div>
@@ -431,11 +396,14 @@ export default function Dashboard() {
                   <span className="text-blue-400 font-semibold uppercase tracking-wider text-[10px]">Available At Facility:</span>
                   <div className="text-blue-200 font-semibold">{aiResult.availableStore}</div>
                 </div>
+                <div className="pt-1 border-t border-slate-800">
+                  <span className="text-teal-400 font-semibold uppercase tracking-wider text-[10px]">Recommended Specialist:</span>
+                  <div className="font-bold text-slate-100">{aiResult.specialist}</div>
+                </div>
               </div>
             )}
           </div>
 
-          {/* Right Column: Active Location Bar & Proximity Facility Finder */}
           <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl flex flex-col justify-between space-y-4">
             <div className="space-y-1">
               <div className="inline-flex p-2.5 bg-emerald-950 text-emerald-400 rounded-xl mb-1">
@@ -452,7 +420,6 @@ export default function Dashboard() {
                   <button
                     type="button"
                     onClick={handleAutoDetectLocation}
-                    title="Detect Me"
                     className="text-emerald-400 hover:underline flex items-center gap-1 text-[11px]"
                   >
                     <Crosshair className="w-3 h-3" /> Detect Me
@@ -519,11 +486,6 @@ export default function Dashboard() {
                         }`}>
                           {store.type}
                         </span>
-                        {index === 0 && (
-                          <span className="text-[9px] bg-emerald-600 text-white font-bold px-1.5 py-0.2 rounded-full uppercase">
-                            Closest
-                          </span>
-                        )}
                       </div>
                       {estimatedTimes[store.id] !== undefined && (
                         <span className="text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800/60 px-1.5 py-0.2 rounded-full flex items-center gap-0.5">
@@ -541,7 +503,6 @@ export default function Dashboard() {
                       href={store.mapQuery}
                       target="_blank"
                       rel="noopener noreferrer"
-                      title="Google Maps"
                       className="p-2 bg-slate-900 hover:bg-emerald-950 text-slate-400 hover:text-emerald-400 border border-slate-800 rounded-lg transition"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
@@ -560,15 +521,12 @@ export default function Dashboard() {
                 </div>
               ))}
             </div>
-
           </div>
-
         </div>
       </main>
     );
   }
 
-  // STEP 2: Service Selection Hub
   if (activeView === "hub") {
     return (
       <main className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-6">
@@ -579,7 +537,7 @@ export default function Dashboard() {
                 <h1 className="text-xl font-bold text-emerald-400">{selectedStore.name}</h1>
                 <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full">{selectedStore.type}</span>
               </div>
-              <p className="text-xs text-slate-400">{selectedStore.location}</p>
+              <p className="text-xs text-slate-400">{selectedStore.location} • Tel: {selectedStore.phone}</p>
             </div>
             <button
               onClick={() => setSelectedStore(null)}
@@ -639,7 +597,6 @@ export default function Dashboard() {
     );
   }
 
-  // STEP 3: Appointment Booking Interface
   if (activeView === "appointment") {
     return (
       <main className="min-h-screen bg-slate-950 text-slate-100 p-8 flex items-center justify-center">
@@ -659,14 +616,24 @@ export default function Dashboard() {
           </div>
 
           {appointmentBooked ? (
-            <div className="bg-emerald-950/40 border border-emerald-800/60 p-6 rounded-xl text-center space-y-3">
+            <div className="bg-emerald-950/40 border border-emerald-800/60 p-6 rounded-xl text-center space-y-4 animate-fadeIn">
               <h3 className="text-lg font-semibold text-emerald-400">Appointment Confirmed!</h3>
-              <p className="text-sm text-slate-300">We have scheduled your visit for <strong>{appointment.date}</strong> at <strong>{appointment.time}</strong>.</p>
+              <p className="text-sm text-slate-300">
+                We have scheduled your visit for <strong>{appointment.date}</strong> at <strong>{appointment.time}</strong>. A confirmation has been sent to <strong>{appointment.gmail}</strong>.
+              </p>
+
+              <div className="bg-slate-950 border border-blue-800/60 p-4 rounded-xl space-y-1 text-left">
+                <p className="text-xs text-slate-400">Call to confirm your appointment with {selectedStore.name}:</p>
+                <a href={`tel:${selectedStore.phone}`} className="text-sm font-bold text-blue-400 hover:underline flex items-center gap-1.5">
+                  📞 {selectedStore.phone}
+                </a>
+              </div>
+
               <button
                 onClick={() => setAppointmentBooked(false)}
-                className="mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-xs rounded-lg transition"
+                className="mt-2 w-full px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded-lg transition"
               >
-                Book Another
+                Book Another Appointment
               </button>
             </div>
           ) : (
@@ -682,6 +649,31 @@ export default function Dashboard() {
                   className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500"
                 />
               </div>
+
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">Phone Number</label>
+                <input
+                  type="tel"
+                  required
+                  value={appointment.phoneNo}
+                  onChange={(e) => setAppointment({ ...appointment, phoneNo: e.target.value })}
+                  placeholder="+91 98765 43210"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">Gmail Address</label>
+                <input
+                  type="email"
+                  required
+                  value={appointment.gmail}
+                  onChange={(e) => setAppointment({ ...appointment, gmail: e.target.value })}
+                  placeholder="example@gmail.com"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs text-slate-400 mb-1">Preferred Date (DD-MM-YYYY)</label>
@@ -700,32 +692,34 @@ export default function Dashboard() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-400 mb-1">Preferred Time Slot</label>
+                  <label className="block text-xs text-slate-400 mb-1">Available Timeline Slots</label>
                   <select
                     required
                     value={appointment.time}
                     onChange={(e) => setAppointment({ ...appointment, time: e.target.value })}
                     className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 text-slate-300"
                   >
-                    <option value="" disabled>Choose time...</option>
+                    <option value="" disabled>Choose available slot...</option>
                     {availableTimes.map((timeSlot, idx) => (
                       <option key={idx} value={timeSlot}>
-                        {timeSlot}
+                        {timeSlot} (Available)
                       </option>
                     ))}
                   </select>
                 </div>
               </div>
+
               <div>
                 <label className="block text-xs text-slate-400 mb-1">Symptoms or Notes (Optional)</label>
                 <textarea
-                  rows={3}
+                  rows={2}
                   value={appointment.notes}
                   onChange={(e) => setAppointment({ ...appointment, notes: e.target.value })}
                   placeholder="Briefly describe reason for visit..."
                   className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500"
                 />
               </div>
+
               <button
                 type="submit"
                 className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-lg transition"
@@ -739,7 +733,6 @@ export default function Dashboard() {
     );
   }
 
-  // STEP 3B: Doctor Teleconsultation Interface with FIFO Queue
   if (activeView === "consult") {
     return (
       <main className="min-h-screen bg-slate-950 text-slate-100 p-8 flex items-center justify-center">
@@ -848,7 +841,6 @@ export default function Dashboard() {
     );
   }
 
-  // STEP 4: View-Only Inventory Interface
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100 p-8">
       <div className="max-w-6xl mx-auto space-y-8">
@@ -884,7 +876,6 @@ export default function Dashboard() {
           </div>
         </header>
 
-        {/* Metrics Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-slate-900 border border-slate-800 p-6 rounded-xl flex items-center gap-4">
             <div className="p-3 bg-emerald-950 text-emerald-400 rounded-lg">
@@ -906,7 +897,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Inventory List (View Only) */}
         <section className="bg-slate-900 border border-slate-800 p-6 rounded-xl shadow-lg space-y-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <h2 className="text-xl font-semibold">Available Stock Catalog</h2>
