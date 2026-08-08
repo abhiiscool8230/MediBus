@@ -1,9 +1,6 @@
-<!-- BEGIN:nextjs-agent-rules -->
+# Medibus AI Coding Agent Rules
 
-# This is NOT the Next.js you know
-
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
-
-This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
-
-<!-- END:nextjs-agent-rules -->
+- **Code Quality**: Always write clean, modular, and strongly-typed TypeScript components.
+- **Styling Standards**: Never use inline styling or external CSS sheets; rely strictly on Tailwind CSS utility classes.
+- **Localization**: All monetary values must be represented in Indian Rupees (₹), and location features must cater to regional healthcare hubs.
+- **Error Handling**: Ensure robust fallback logic for missing geolocation permissions or network timeouts.
