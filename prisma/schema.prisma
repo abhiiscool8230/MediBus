@@ -1,0 +1,27 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Store {
+  id        String     @id @default(uuid())
+  name      String     @unique
+  location  String
+  medicines Medicine[]
+  createdAt DateTime   @default(now())
+}
+
+model Medicine {
+  id         String   @id @default(uuid())
+  name       String
+  category   String
+  stock      Int
+  price      Float
+  expiryDate DateTime
+  storeId    String
+  store      Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+}
