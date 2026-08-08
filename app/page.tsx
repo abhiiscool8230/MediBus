@@ -174,37 +174,63 @@ export default function Dashboard() {
   };
 
   const handleAutoDetectLocation = () => {
-    setUserAddress("Detecting your location...");
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const lat = position.coords.latitude;
-          const lon = position.coords.longitude;
-          try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 4000);
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`, { signal: controller.signal });
-            clearTimeout(timeoutId);
-            const data = await res.json();
-            setUserAddress(data?.display_name || `Bhubaneswar GPS Location (${lat.toFixed(3)}, ${lon.toFixed(3)})`);
-          } catch (e) {
-            setUserAddress(`Bhubaneswar GPS Location (${lat.toFixed(3)}, ${lon.toFixed(3)})`);
-          }
-          computeEtas(lat, lon);
-          setIsEditingAddress(false);
-        },
-        () => {
-          setUserAddress("Master Canteen Square, Bhubaneswar (Default)");
-          computeEtas(20.2961, 85.8245);
-          setIsEditingAddress(false);
-        },
-        { timeout: 7000, enableHighAccuracy: false }
-      );
-    } else {
+    setUserAddress("Pinpointing your precise GPS location...");
+    
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser.");
       setUserAddress("Master Canteen Square, Bhubaneswar (Default)");
       computeEtas(20.2961, 85.8245);
-      setIsEditingAddress(false);
+      return;
     }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 8000);
+          
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`, { 
+            signal: controller.signal,
+            headers: { "User-Agent": "MedibusApp/1.0" }
+          });
+          clearTimeout(timeoutId);
+          const data = await res.json();
+          
+          const resolvedAddress = data?.display_name || `Live GPS Location (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
+          setUserAddress(resolvedAddress);
+        } catch (e) {
+          setUserAddress(`Live GPS Coordinates (${lat.toFixed(4)}, ${lon.toFixed(4)})`);
+        }
+        
+        computeEtas(lat, lon);
+        setIsEditingAddress(false);
+      },
+      (error) => {
+        console.warn("Geolocation error:", error.message);
+        
+        let errorMsg = "Unable to fetch your precise location. ";
+        if (error.code === 1) {
+          errorMsg += "Location permission was denied. Please allow location access in your browser settings.";
+        } else if (error.code === 2) {
+          errorMsg += "Position unavailable. Please check your GPS or network connection.";
+        } else {
+          errorMsg += "Request timed out.";
+        }
+        
+        alert(errorMsg + " Falling back to default Bhubaneswar center.");
+        setUserAddress("Master Canteen Square, Bhubaneswar (Default)");
+        computeEtas(20.2961, 85.8245);
+        setIsEditingAddress(false);
+      },
+      { 
+        timeout: 12000, 
+        enableHighAccuracy: true, 
+        maximumAge: 0             
+      }
+    );
   };
 
   useEffect(() => {
